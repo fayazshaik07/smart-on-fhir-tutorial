@@ -1,77 +1,90 @@
-(function(window){
-  window.extractData = function() {
+(function (window) {
+  window.extractData = function () {
     var ret = $.Deferred();
 
     function onError() {
-      console.log('Loading error', arguments);
+      console.log("Loading error", arguments);
       ret.reject();
     }
 
     function onReady(smart) {
-      if (smart.hasOwnProperty('patient')) {
+      if (smart.hasOwnProperty("patient")) {
         var patient = smart.patient;
         var pt = patient.read();
         var obv = smart.patient.api.fetchAll({
-          type: 'Observation',
+          type: "Observation",
           query: {
             code: {
-              $or: ['http://loinc.org|8302-2', 'http://loinc.org|8462-4',
-                    'http://loinc.org|8480-6', 'http://loinc.org|2085-9',
-                    'http://loinc.org|2089-1', 'http://loinc.org|55284-4']
-            }
-          }
+              $or: [
+                "http://loinc.org|8302-2",
+                "http://loinc.org|8462-4",
+                "http://loinc.org|8480-6",
+                "http://loinc.org|2085-9",
+                "http://loinc.org|2089-1",
+                "http://loinc.org|55284-4",
+              ],
+            },
+          },
         });
 
-        // Fetching MedicationRequest with patient parameter
-        $.when(pt).done(function(patient) {
-          var meds = smart.patient.api.fetchAll({
-            type: 'MedicationRequest',
+        var meds;
+
+        // Fetching Medications
+        $.when(pt).done(function (patient) {
+          meds = smart.patient.api.fetchAll({
+            type: "MedicationRequest",
             query: {
-              patient: patient.id // Use patient ID to filter MedicationRequest
-            }
+              patient: patient.id,
+            },
           });
 
           $.when(pt, obv, meds).fail(onError);
 
-          $.when(pt, obv, meds).done(function(patient, obv, meds) {
-            var byCodes = smart.byCodes(obv, 'code');
+          $.when(pt, obv, meds).done(function (patient, obv, meds) {
+            var byCodes = smart.byCodes(obv, "code");
             var gender = patient.gender;
 
-            var fname = '';
-            var lname = '';
+            var fname = "";
+            var lname = "";
 
-            if (typeof patient.name[0] !== 'undefined') {
-              fname = patient.name[0].given.join(' ');
+            if (typeof patient.name[0] !== "undefined") {
+              fname = patient.name[0].given.join(" ");
               lname = patient.name[0].family;
             }
 
-            var height = byCodes('8302-2');
-            var systolicbp = getBloodPressureValue(byCodes('55284-4'),'8480-6');
-            var diastolicbp = getBloodPressureValue(byCodes('55284-4'),'8462-4');
-            var hdl = byCodes('2085-9');
-            var ldl = byCodes('2089-1');
+            var height = byCodes("8302-2");
+            var systolicbp = getBloodPressureValue(
+              byCodes("55284-4"),
+              "8480-6"
+            );
+            var diastolicbp = getBloodPressureValue(
+              byCodes("55284-4"),
+              "8462-4"
+            );
+            var hdl = byCodes("2085-9");
+            var ldl = byCodes("2089-1");
 
             var p = defaultPatient();
             p.birthdate = patient.birthDate;
             p.gender = gender;
             p.fname = fname;
             p.lname = lname;
+            p.patientId = patient.id;
             p.height = getQuantityValueAndUnit(height[0]);
 
-            if (typeof systolicbp != 'undefined') {
+            if (typeof systolicbp != "undefined") {
               p.systolicbp = systolicbp;
             }
 
-            if (typeof diastolicbp != 'undefined') {
+            if (typeof diastolicbp != "undefined") {
               p.diastolicbp = diastolicbp;
             }
 
             p.hdl = getQuantityValueAndUnit(hdl[0]);
             p.ldl = getQuantityValueAndUnit(ldl[0]);
 
-            // Adding functionality for medications
-            p.patientId = patient.id;
-            p.medications = meds.map(function(med) {
+            // Process Medications
+            p.medications = meds.map(function (med) {
               return {
                 medication: med.medicationCodeableConcept?.text || "Unknown",
                 dosage: med.dosageInstruction?.[0]?.text || "No dosage information",
@@ -92,27 +105,27 @@
     return ret.promise();
   };
 
-  function defaultPatient(){
+  function defaultPatient() {
     return {
-      fname: {value: ''},
-      lname: {value: ''},
-      gender: {value: ''},
-      birthdate: {value: ''},
-      height: {value: ''},
-      systolicbp: {value: ''},
-      diastolicbp: {value: ''},
-      ldl: {value: ''},
-      hdl: {value: ''},
-      patientId: {value: ''},
-      medications: []
+      fname: { value: "" },
+      lname: { value: "" },
+      gender: { value: "" },
+      birthdate: { value: "" },
+      height: { value: "" },
+      systolicbp: { value: "" },
+      diastolicbp: { value: "" },
+      ldl: { value: "" },
+      hdl: { value: "" },
+      patientId: { value: "" },
+      medications: [],
     };
   }
 
   function getBloodPressureValue(BPObservations, typeOfPressure) {
     var formattedBPObservations = [];
-    BPObservations.forEach(function(observation){
-      var BP = observation.component.find(function(component){
-        return component.code.coding.find(function(coding) {
+    BPObservations.forEach(function (observation) {
+      var BP = observation.component.find(function (component) {
+        return component.code.coding.find(function (coding) {
           return coding.code == typeOfPressure;
         });
       });
@@ -126,44 +139,45 @@
   }
 
   function getQuantityValueAndUnit(ob) {
-    if (typeof ob != 'undefined' &&
-        typeof ob.valueQuantity != 'undefined' &&
-        typeof ob.valueQuantity.value != 'undefined' &&
-        typeof ob.valueQuantity.unit != 'undefined') {
-          return ob.valueQuantity.value + ' ' + ob.valueQuantity.unit;
+    if (
+      typeof ob != "undefined" &&
+      typeof ob.valueQuantity != "undefined" &&
+      typeof ob.valueQuantity.value != "undefined" &&
+      typeof ob.valueQuantity.unit != "undefined"
+    ) {
+      return ob.valueQuantity.value + " " + ob.valueQuantity.unit;
     } else {
       return undefined;
     }
   }
 
-  window.drawVisualization = function(p) {
-    $('#holder').show();
-    $('#loading').hide();
-    $('#fname').html(p.fname);
-    $('#lname').html(p.lname);
-    $('#gender').html(p.gender);
-    $('#birthdate').html(p.birthdate);
-    $('#height').html(p.height);
-    $('#systolicbp').html(p.systolicbp);
-    $('#diastolicbp').html(p.diastolicbp);
-    $('#ldl').html(p.ldl);
-    $('#hdl').html(p.hdl);
-
-    // Display patient ID
-    $('#patientId').html(p.patientId);
+  window.drawVisualization = function (p) {
+    $("#holder").show();
+    $("#loading").hide();
+    $("#patientId").html(p.patientId); // Display Patient ID at the top
+    $("#fname").html(p.fname);
+    $("#lname").html(p.lname);
+    $("#gender").html(p.gender);
+    $("#birthdate").html(p.birthdate);
+    $("#height").html(p.height);
+    $("#systolicbp").html(p.systolicbp);
+    $("#diastolicbp").html(p.diastolicbp);
+    $("#ldl").html(p.ldl);
+    $("#hdl").html(p.hdl);
 
     // Display medications
-    var medsHtml = p.medications.map(function(med) {
-      return `
-        <tr>
-          <td>${med.medication}</td>
-          <td>${med.dosage}</td>
-          <td>${med.status}</td>
-          <td>${med.authoredOn}</td>
-        </tr>
-      `;
-    }).join('');
-    $('#medications').html(medsHtml);
+    var medsHtml = p.medications
+      .map(function (med) {
+        return `
+          <tr>
+            <td>${med.medication}</td>
+            <td>${med.dosage}</td>
+            <td>${med.status}</td>
+            <td>${med.authoredOn}</td>
+          </tr>
+        `;
+      })
+      .join("");
+    $("#medications").html(medsHtml);
   };
-
 })(window);
