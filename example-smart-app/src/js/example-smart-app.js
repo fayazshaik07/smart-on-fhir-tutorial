@@ -7,24 +7,29 @@
       ret.reject();
     }
 
-    function onReady(smart)  {
+    function onReady(smart) {
       if (smart.hasOwnProperty('patient')) {
         var patient = smart.patient;
         var pt = patient.read();
         var obv = smart.patient.api.fetchAll({
-                    type: 'Observation',
-                    query: {
-                      code: {
-                        $or: ['http://loinc.org|8302-2', 'http://loinc.org|8462-4',
-                              'http://loinc.org|8480-6', 'http://loinc.org|2085-9',
-                              'http://loinc.org|2089-1', 'http://loinc.org|55284-4']
-                      }
-                    }
-                  });
+          type: 'Observation',
+          query: {
+            code: {
+              $or: ['http://loinc.org|8302-2', 'http://loinc.org|8462-4',
+                    'http://loinc.org|8480-6', 'http://loinc.org|2085-9',
+                    'http://loinc.org|2089-1', 'http://loinc.org|55284-4']
+            }
+          }
+        });
 
-        $.when(pt, obv).fail(onError);
+        var meds = smart.patient.api.fetchAll({
+          type: 'MedicationRequest',
+          query: {}
+        });
 
-        $.when(pt, obv).done(function(patient, obv) {
+        $.when(pt, obv, meds).fail(onError);
+
+        $.when(pt, obv, meds).done(function(patient, obv, meds) {
           var byCodes = smart.byCodes(obv, 'code');
           var gender = patient.gender;
 
@@ -49,7 +54,7 @@
           p.lname = lname;
           p.height = getQuantityValueAndUnit(height[0]);
 
-          if (typeof systolicbp != 'undefined')  {
+          if (typeof systolicbp != 'undefined') {
             p.systolicbp = systolicbp;
           }
 
@@ -60,6 +65,17 @@
           p.hdl = getQuantityValueAndUnit(hdl[0]);
           p.ldl = getQuantityValueAndUnit(ldl[0]);
 
+          // Adding functionality for medications
+          p.patientId = patient.id;
+          p.medications = meds.map(function(med) {
+            return {
+              medication: med.medicationCodeableConcept?.text || "Unknown",
+              dosage: med.dosageInstruction?.[0]?.text || "No dosage information",
+              status: med.status || "Unknown",
+              authoredOn: med.authoredOn || "Unknown",
+            };
+          });
+
           ret.resolve(p);
         });
       } else {
@@ -69,7 +85,6 @@
 
     FHIR.oauth2.ready(onReady, onError);
     return ret.promise();
-
   };
 
   function defaultPatient(){
@@ -83,6 +98,8 @@
       diastolicbp: {value: ''},
       ldl: {value: ''},
       hdl: {value: ''},
+      patientId: {value: ''},
+      medications: []
     };
   }
 
@@ -126,6 +143,22 @@
     $('#diastolicbp').html(p.diastolicbp);
     $('#ldl').html(p.ldl);
     $('#hdl').html(p.hdl);
+
+    // Display patient ID
+    $('#patientId').html(p.patientId);
+
+    // Display medications
+    var medsHtml = p.medications.map(function(med) {
+      return `
+        <tr>
+          <td>${med.medication}</td>
+          <td>${med.dosage}</td>
+          <td>${med.status}</td>
+          <td>${med.authoredOn}</td>
+        </tr>
+      `;
+    }).join('');
+    $('#medications').html(medsHtml);
   };
 
 })(window);
