@@ -36,12 +36,13 @@
             },
           });
 
-          var conditions = smart.patient.api.fetchAll({
-            type: "Condition",
-            query: {
-              patient: patient.id, // Use patient ID to filter Condition
-            },
-          });
+          var conditions = fetchWithRetry(() => 
+            smart.patient.api.fetchAll({
+              type: "Condition",
+              query: {
+                patient: patient.id, // Use patient ID to filter Condition
+              },
+            }), 3, 1000); // Retry up to 3 times with 1s delay
 
           $.when(pt, obv, meds, conditions).fail(onError);
 
@@ -90,8 +91,8 @@
               };
             });
 
-            // Get Conditions
-            var conditionHistory = conditions.map(function (cond) {
+            // Get Top 20 Conditions
+            var conditionHistory = conditions.slice(0, 20).map(function (cond) {
               return {
                 id: cond.id,
                 category:
@@ -150,6 +151,24 @@
     FHIR.oauth2.ready(onReady, onError);
     return ret.promise();
   };
+
+  function fetchWithRetry(fetchFunction, retries = 3, delay = 1000) {
+    return new Promise((resolve, reject) => {
+      function attempt(remainingRetries) {
+        fetchFunction()
+          .then(resolve)
+          .catch((error) => {
+            if (remainingRetries > 0) {
+              console.warn(`Retrying... (${retries - remainingRetries + 1})`);
+              setTimeout(() => attempt(remainingRetries - 1), delay);
+            } else {
+              reject(error);
+            }
+          });
+      }
+      attempt(retries);
+    });
+  }
 
   function defaultPatient() {
     return {
