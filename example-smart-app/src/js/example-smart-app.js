@@ -97,15 +97,26 @@
             p.hdl = getQuantityValueAndUnit(hdl[0]);
             p.ldl = getQuantityValueAndUnit(ldl[0]);
 
-            // Process Medications
-            p.medications = meds.map(function (med) {
-              return {
-                medication: med.medicationCodeableConcept?.text || "Unknown",
-                dosage: med.dosageInstruction?.[0]?.text || "No dosage information",
-                status: med.status || "Unknown",
-                authoredOn: med.authoredOn || "Unknown",
-              };
-            });
+            // Process Medications - Remove duplicates
+            const seenMeds = new Map();
+            p.medications = meds
+              .map(function (med) {
+                return {
+                  medication: med.medicationCodeableConcept?.text || "Unknown",
+                  dosage:
+                    med.dosageInstruction?.[0]?.text || "No dosage information",
+                  status: med.status || "Unknown",
+                  authoredOn: med.authoredOn || "Unknown",
+                };
+              })
+              .filter((med) => {
+                const key = `${med.medication}-${med.dosage}-${med.status}`;
+                if (seenMeds.has(key)) {
+                  return false;
+                }
+                seenMeds.set(key, true);
+                return true;
+              });
 
             // Add observations
             p.observations = observations;
