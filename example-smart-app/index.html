@@ -3,66 +3,47 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <title>MedPearlCerner-SMART-App</title>
-    <link href="https://fonts.googleapis.com/css2?family=Barlow&display=swap" rel="stylesheet" />
     <style>
       body {
-        font-family: "Barlow", sans-serif;
+        font-family: 'Barlow', sans-serif;
         margin: 20px;
+        padding: 20px;
       }
       table {
         width: 100%;
         border-collapse: collapse;
-        margin: 20px 0;
+        margin-bottom: 20px;
       }
       table th,
       table td {
         border: 1px solid #ddd;
         padding: 8px;
-      }
-      table th {
-        background-color: #f4f4f4;
         text-align: left;
       }
-      #loading {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 100vh;
-      }
-      .loader {
-        border: 6px solid #f3f3f3;
-        border-radius: 50%;
-        border-top: 6px solid #3498db;
-        width: 50px;
-        height: 50px;
-        animation: spin 2s linear infinite;
-      }
-      @keyframes spin {
-        0% {
-          transform: rotate(0deg);
-        }
-        100% {
-          transform: rotate(360deg);
-        }
+      table th {
+        background-color: #f2f2f2;
+        font-weight: bold;
       }
     </style>
   </head>
   <body>
-    <div id="loading">
-      <div class="loader"></div>
+    <div id="errors"></div>
+    <div id="loading" class="spinner">
+      <p>Loading data...</p>
     </div>
     <div id="holder" style="display: none;">
-      <h1>MedPearlCerner-SMART-App</h1>
       <h2>Patient Details</h2>
       <table>
         <tbody id="patientInfo"></tbody>
       </table>
+
       <h2>Observations</h2>
       <table>
         <thead>
           <tr>
-            <th>ID</th>
+            <th>Observation ID</th>
             <th>Status</th>
             <th>Category</th>
             <th>Code</th>
@@ -72,6 +53,7 @@
         </thead>
         <tbody id="observations"></tbody>
       </table>
+
       <h2>Medications</h2>
       <table>
         <thead>
@@ -85,6 +67,20 @@
         <tbody id="medications"></tbody>
       </table>
     </div>
-    <script src="./example-smart-app.js"></script>
+
+    <script src="./lib/js/fhir-client-v0.1.12.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="./src/js/example-smart-app.js"></script>
+    <script>
+      extractData().then(
+        function (p) {
+          drawVisualization(p);
+        },
+        function () {
+          $("#loading").hide();
+          $("#errors").html("<p>Failed to call FHIR Service</p>");
+        }
+      );
+    </script>
   </body>
 </html>
