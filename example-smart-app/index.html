@@ -1,71 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>MedPearlCerner-SMART-App</title>
-
-    <link rel="stylesheet" type="text/css" href="./src/css/example-smart-app.css" />
+    <style>
+      body {
+        font-family: 'Barlow', sans-serif;
+        margin: 20px;
+        padding: 20px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+      }
+      table th,
+      table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+      }
+      table th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+      }
+    </style>
   </head>
   <body>
     <div id="errors"></div>
     <div id="loading" class="spinner">
-      <div class="bounce1"></div>
-      <div class="bounce2"></div>
-      <div class="bounce3"></div>
+      <p>Loading data...</p>
     </div>
-    <div id="holder">
-      <h2>MedPearlCerner-SMART-App</h2>
-
-      <h2>Patient Resource</h2>
+    <div id="holder" style="display: none;">
+      <h2>Patient Details</h2>
       <table>
-        <tr>
-          <th>Patient ID:</th>
-          <td id="patientId"></td>
-        </tr>
-        <tr>
-          <th>First Name:</th>
-          <td id="fname"></td>
-        </tr>
-        <tr>
-          <th>Last Name:</th>
-          <td id="lname"></td>
-        </tr>
-        <tr>
-          <th>Gender:</th>
-          <td id="gender"></td>
-        </tr>
-        <tr>
-          <th>Date of Birth:</th>
-          <td id="birthdate"></td>
-        </tr>
+        <tbody id="patientInfo"></tbody>
       </table>
 
-      <h2>Observation Resource</h2>
-      <table>
-        <tr>
-          <th>Height:</th>
-          <td id="height"></td>
-        </tr>
-        <tr>
-          <th>Systolic Blood Pressure:</th>
-          <td id="systolicbp"></td>
-        </tr>
-        <tr>
-          <th>Diastolic Blood Pressure:</th>
-          <td id="diastolicbp"></td>
-        </tr>
-        <tr>
-          <th>LDL:</th>
-          <td id="ldl"></td>
-        </tr>
-        <tr>
-          <th>HDL:</th>
-          <td id="hdl"></td>
-        </tr>
-      </table>
-
-      <h3>Observations</h3>
+      <h2>Observations</h2>
       <table>
         <thead>
           <tr>
@@ -80,7 +54,7 @@
         <tbody id="observations"></tbody>
       </table>
 
-      <h3>Medications</h3>
+      <h2>Medications</h2>
       <table>
         <thead>
           <tr>
@@ -94,9 +68,9 @@
       </table>
     </div>
 
-    <script src="./src/js/example-smart-app.js"></script>
     <script src="./lib/js/fhir-client-v0.1.12.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="./src/js/example-smart-app.js"></script>
     <script>
       extractData().then(
         function (p) {
@@ -104,7 +78,7 @@
         },
         function () {
           $("#loading").hide();
-          $("#errors").html("<p> Failed to call FHIR Service </p>");
+          $("#errors").html("<p>Failed to call FHIR Service</p>");
         }
       );
     </script>
