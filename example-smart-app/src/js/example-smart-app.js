@@ -27,7 +27,7 @@
           },
         });
 
-        // Fetching MedicationRequest with patient parameter
+        // Fetching Condition and MedicationRequest
         $.when(pt).done(function (patient) {
           var meds = smart.patient.api.fetchAll({
             type: "MedicationRequest",
@@ -36,9 +36,21 @@
             },
           });
 
-          $.when(pt, obv, meds).fail(onError);
+          var conditions = smart.patient.api.fetchAll({
+            type: "Condition",
+            query: {
+              patient: patient.id, // Use patient ID to filter Condition
+            },
+          });
 
-          $.when(pt, obv, meds).done(function (patient, obv, meds) {
+          $.when(pt, obv, meds, conditions).fail(onError);
+
+          $.when(pt, obv, meds, conditions).done(function (
+            patient,
+            obv,
+            meds,
+            conditions
+          ) {
             var byCodes = smart.byCodes(obv, "code");
             var gender = patient.gender;
 
@@ -64,7 +76,7 @@
             var hdl = byCodes("2085-9");
             var ldl = byCodes("2089-1");
 
-            // Get additional observation data
+            // Get Observations
             var observations = obv.map(function (obs) {
               return {
                 id: obs.id,
@@ -78,28 +90,22 @@
               };
             });
 
-            var p = defaultPatient();
-            p.birthdate = patient.birthDate;
-            p.gender = gender;
-            p.fname = fname;
-            p.lname = lname;
-            p.patientId = patientId;
-            p.height = getQuantityValueAndUnit(height[0]);
-
-            if (typeof systolicbp != "undefined") {
-              p.systolicbp = systolicbp;
-            }
-
-            if (typeof diastolicbp != "undefined") {
-              p.diastolicbp = diastolicbp;
-            }
-
-            p.hdl = getQuantityValueAndUnit(hdl[0]);
-            p.ldl = getQuantityValueAndUnit(ldl[0]);
+            // Get Conditions
+            var conditionHistory = conditions.map(function (cond) {
+              return {
+                id: cond.id,
+                category:
+                  cond.category?.map((cat) => cat.text).join(", ") || "Unknown",
+                code: cond.code?.text || "Unknown",
+                verificationStatus: cond.verificationStatus?.text || "Unknown",
+                recordedDate: cond.recordedDate || "N/A",
+                recorder: cond.recorder?.display || "Unknown",
+              };
+            });
 
             // Process Medications - Remove duplicates
             const seenMeds = new Map();
-            p.medications = meds
+            var medications = meds
               .map(function (med) {
                 return {
                   medication: med.medicationCodeableConcept?.text || "Unknown",
@@ -118,8 +124,20 @@
                 return true;
               });
 
-            // Add observations
+            var p = defaultPatient();
+            p.birthdate = patient.birthDate;
+            p.gender = gender;
+            p.fname = fname;
+            p.lname = lname;
+            p.patientId = patientId;
+            p.height = getQuantityValueAndUnit(height[0]);
+            p.systolicbp = systolicbp || "N/A";
+            p.diastolicbp = diastolicbp || "N/A";
+            p.hdl = getQuantityValueAndUnit(hdl[0]) || "N/A";
+            p.ldl = getQuantityValueAndUnit(ldl[0]) || "N/A";
             p.observations = observations;
+            p.conditions = conditionHistory;
+            p.medications = medications;
 
             ret.resolve(p);
           });
@@ -135,18 +153,19 @@
 
   function defaultPatient() {
     return {
-      fname: { value: "" },
-      lname: { value: "" },
-      gender: { value: "" },
-      birthdate: { value: "" },
-      height: { value: "" },
-      systolicbp: { value: "" },
-      diastolicbp: { value: "" },
-      ldl: { value: "" },
-      hdl: { value: "" },
-      patientId: { value: "" },
+      fname: "",
+      lname: "",
+      gender: "",
+      birthdate: "",
+      height: "",
+      systolicbp: "",
+      diastolicbp: "",
+      ldl: "",
+      hdl: "",
+      patientId: "",
       medications: [],
       observations: [],
+      conditions: [],
     };
   }
 
@@ -209,6 +228,23 @@
       })
       .join("");
     $("#observations").html(obsHtml);
+
+    // Populate Conditions
+    var condHtml = p.conditions
+      .map(function (cond) {
+        return `
+          <tr>
+            <td>${cond.id}</td>
+            <td>${cond.category}</td>
+            <td>${cond.code}</td>
+            <td>${cond.verificationStatus}</td>
+            <td>${cond.recordedDate}</td>
+            <td>${cond.recorder}</td>
+          </tr>
+        `;
+      })
+      .join("");
+    $("#conditions").html(condHtml);
 
     // Populate Medications
     var medsHtml = p.medications
