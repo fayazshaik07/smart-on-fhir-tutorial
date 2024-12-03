@@ -192,8 +192,8 @@
   }
 
   window.drawVisualization = function (p) {
-    $("#holder").show();
     $("#loading").hide();
+    $("#holder").show();
 
     // Populate Patient Info
     $("#patientInfo").html(`
