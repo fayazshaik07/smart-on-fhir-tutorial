@@ -183,33 +183,17 @@
   window.drawVisualization = function (p) {
     $("#holder").show();
     $("#loading").hide();
-    $("#patientId").html(p.patientId);
-    $("#fname").html(p.fname);
-    $("#lname").html(p.lname);
-    $("#gender").html(p.gender);
-    $("#birthdate").html(p.birthdate);
-    $("#height").html(p.height);
-    $("#systolicbp").html(p.systolicbp);
-    $("#diastolicbp").html(p.diastolicbp);
-    $("#ldl").html(p.ldl);
-    $("#hdl").html(p.hdl);
 
-    // Display medications
-    var medsHtml = p.medications
-      .map(function (med) {
-        return `
-          <tr>
-            <td>${med.medication}</td>
-            <td>${med.dosage}</td>
-            <td>${med.status}</td>
-            <td>${med.authoredOn}</td>
-          </tr>
-        `;
-      })
-      .join("");
-    $("#medications").html(medsHtml);
+    // Populate Patient Info
+    $("#patientInfo").html(`
+      <tr><td>Patient ID</td><td>${p.patientId}</td></tr>
+      <tr><td>First Name</td><td>${p.fname}</td></tr>
+      <tr><td>Last Name</td><td>${p.lname}</td></tr>
+      <tr><td>Gender</td><td>${p.gender}</td></tr>
+      <tr><td>Date of Birth</td><td>${p.birthdate}</td></tr>
+    `);
 
-    // Display observations
+    // Populate Observations
     var obsHtml = p.observations
       .map(function (obs) {
         return `
@@ -225,5 +209,20 @@
       })
       .join("");
     $("#observations").html(obsHtml);
+
+    // Populate Medications
+    var medsHtml = p.medications
+      .map(function (med) {
+        return `
+          <tr>
+            <td>${med.medication}</td>
+            <td>${med.dosage}</td>
+            <td>${med.status}</td>
+            <td>${med.authoredOn}</td>
+          </tr>
+        `;
+      })
+      .join("");
+    $("#medications").html(medsHtml);
   };
 })(window);
