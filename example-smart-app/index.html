@@ -26,16 +26,38 @@
         background-color: #f2f2f2;
         font-weight: bold;
       }
+      #loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+      }
+      .loader {
+        border: 6px solid #f3f3f3;
+        border-radius: 50%;
+        border-top: 6px solid #3498db;
+        width: 50px;
+        height: 50px;
+        animation: spin 2s linear infinite;
+      }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
     </style>
   </head>
   <body>
-    <div id="errors"></div>
-    <div id="loading" class="spinner">
-      <p>Loading data...</p>
+    <div id="loading">
+      <div class="loader"></div>
     </div>
     <div id="holder" style="display: none;">
+      <h1>MedPearlCerner-SMART-App</h1>
       <h2>Patient Details</h2>
-      <table>
+      <table id="patientTable">
         <tbody id="patientInfo"></tbody>
       </table>
 
@@ -43,7 +65,7 @@
       <table>
         <thead>
           <tr>
-            <th>Observation ID</th>
+            <th>ID</th>
             <th>Status</th>
             <th>Category</th>
             <th>Code</th>
@@ -67,20 +89,6 @@
         <tbody id="medications"></tbody>
       </table>
     </div>
-
-    <script src="./lib/js/fhir-client-v0.1.12.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
     <script src="./src/js/example-smart-app.js"></script>
-    <script>
-      extractData().then(
-        function (p) {
-          drawVisualization(p);
-        },
-        function () {
-          $("#loading").hide();
-          $("#errors").html("<p>Failed to call FHIR Service</p>");
-        }
-      );
-    </script>
   </body>
 </html>
