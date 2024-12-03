@@ -27,7 +27,6 @@
           },
         });
 
-        // Fetching MedicationRequest with patient parameter
         $.when(pt).done(function (patient) {
           var meds = smart.patient.api.fetchAll({
             type: "MedicationRequest",
@@ -45,12 +44,20 @@
             var fname = "";
             var lname = "";
             var patientId = "";
+            var address = "";
+            var telecom = "";
 
             if (typeof patient.name[0] !== "undefined") {
               fname = patient.name[0].given.join(" ");
               lname = patient.name[0].family;
-              patientId = patient.id;
             }
+            if (typeof patient.address !== "undefined" && patient.address[0]) {
+              address = `${patient.address[0].line.join(", ")}, ${patient.address[0].city}, ${patient.address[0].state}, ${patient.address[0].postalCode}`;
+            }
+            if (typeof patient.telecom !== "undefined" && patient.telecom[0]) {
+              telecom = patient.telecom.map((t) => `${t.system}: ${t.value}`).join(", ");
+            }
+            patientId = patient.id;
 
             var height = byCodes("8302-2");
             var systolicbp = getBloodPressureValue(
@@ -84,6 +91,8 @@
             p.fname = fname;
             p.lname = lname;
             p.patientId = patientId;
+            p.address = address;
+            p.telecom = telecom;
             p.height = getQuantityValueAndUnit(height[0]);
 
             if (typeof systolicbp != "undefined") {
@@ -139,6 +148,8 @@
       lname: { value: "" },
       gender: { value: "" },
       birthdate: { value: "" },
+      address: { value: "" },
+      telecom: { value: "" },
       height: { value: "" },
       systolicbp: { value: "" },
       diastolicbp: { value: "" },
@@ -191,6 +202,8 @@
       <tr><td>Last Name</td><td>${p.lname}</td></tr>
       <tr><td>Gender</td><td>${p.gender}</td></tr>
       <tr><td>Date of Birth</td><td>${p.birthdate}</td></tr>
+      <tr><td>Address</td><td>${p.address}</td></tr>
+      <tr><td>Telecom</td><td>${p.telecom}</td></tr>
     `);
 
     // Populate Observations
